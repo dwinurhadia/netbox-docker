@@ -97,6 +97,12 @@ You can use the following ENV variables to customize the build:
            Default: https://github.com/${SRC_REPO}/netbox/archive/$BRANCH.tar.gz
 ```
 
+## Building last stable version
+
+`./build-latest.sh` is used to build the last stable Docker image.
+
+This file exists on original repo. This fork is for integration with kubernetes and rancher.
+
 ## Tests
 
 To run the bundled test, use the `docker-compose.test.yml` file.
