@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: netbox
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  tls:
+    - secretName: xxxxxxxxx
+  rules:
+  - host: netbox.xxxxxxxxx.corp
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: netbox
+          servicePort: 8001
+  - host: netbox
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: netbox
+          servicePort: 8001

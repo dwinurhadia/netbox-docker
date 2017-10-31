@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbox
+  labels:
+    name: netbox
+spec:
+  selector:
+    name: netbox
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: netbox
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: netbox
+    spec:
+      imagePullSecrets:
+      - name: cencoreg
+      containers:
+      - name: netbox
+        image: blacktourmaline/netbox:v2.2.2
+        env:
+          - name: SUPERUSER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: netbox
+                key: superuser
+          - name: SUPERUSER_EMAIL
+            value: admin@domain.com
+          - name: SUPERUSER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: netbox
+                key: superuserpaswd
+          - name: ALLOWED_HOSTS
+            value: "localhost"
+          - name: DB_NAME
+            value: netbox
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: netbox
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: netbox
+                key: password
+          - name: DB_HOST
+            value: netbox-db.default.svc.cluster.local
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: netbox
+                key: secret
+          - name: TIME_ZONE
+            value: "America/Santiago"
+          - name: EMAIL_SERVER
+            value: smtp.domain.com
+          - name: EMAIL_PORT
+            value: "25"
+          - name: EMAIL_TIMEOUT
+            value: "10"
+          - name: EMAIL_FROM
+            value: netbox@domain.coom
+          - name: NETBOX_USERNAME
+            value: datacenter
+          - name: NETBOX_PASSWORD
+            value: datacenter
+        ports:
+        - name: http
+          containerPort: 8001
+          protocol: TCP
+        volumeMounts:
+        - name: static-volume
+          mountPath: /opt/netbox/netbox/static/
+      - name: web
+        image: nginx:1.11-alpine
+        command: 
+          - nginx
+          - -g 
+          - 'daemon off;'
+          - -c 
+          - /etc/netbox-nginx/nginx.conf
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/netbox-nginx
+        volumeMounts:
+        - name: static-volume
+          mountPath: /opt/netbox/netbox/static/
+      volumes:
+        - name: config-volume
+          configMap:
+            name: netbox
+        - name: static-volume
+          emptyDir: {}

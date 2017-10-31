@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbox-db
+  labels:
+    name: netbox-db
+spec:
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+  selector:
+    name: netbox-db
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: netbox-db
+  annotations:
+    volume.beta.kubernetes.io/mount-options: "nfsvers=3,hard"
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    server: nfs-xxx.xxxxxxx.xxxx
+    path: "/xxx/xxxxx/"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: netbox-db
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: netbox-db
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: netbox-db
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:9.6.5-alpine
+        imagePullPolicy: Always
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: netbox
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: netbox
+              key: password
+        - name: POSTGRES_DB
+          value: netbox
+        ports:
+        - name: postgres
+          containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -h
+            - localhost
+            - -U
+            - postgres
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -h
+            - localhost
+            - -U
+            - postgres
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 500m
+            memory: 256Mi
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: netbox-db
