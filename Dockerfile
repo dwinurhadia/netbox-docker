@@ -10,9 +10,10 @@ RUN apk add --no-cache \
       libffi-dev \
       libxml2-dev \
       libxslt-dev \
-      openldap-dev \
       openssl-dev \
       postgresql-dev \
+      libldap \
+      openldap-dev \
       wget
 
 RUN pip install gunicorn
@@ -27,7 +28,10 @@ RUN wget -q -O - "${URL}" | tar xz \
 WORKDIR /opt/netbox
 RUN pip install -r requirements.txt
 
+RUN pip install django-auth-ldap
+
 COPY docker/configuration.docker.py /opt/netbox/netbox/netbox/configuration.py
+COPY docker/ldap_config.py /opt/netbox/netbox/netbox/ldap_config.py
 COPY docker/gunicorn_config.py /opt/netbox/
 COPY docker/nginx.conf /etc/netbox-nginx/nginx.conf
 

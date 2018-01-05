@@ -1,5 +1,7 @@
 command = '/usr/bin/gunicorn'
 pythonpath = '/opt/netbox/netbox'
+forwarded_allow_ips = '0.0.0.0'
+proxy_allow_ips = '0.0.0.0'
 bind = '0.0.0.0:8001'
 workers = 3
 user = 'root'
